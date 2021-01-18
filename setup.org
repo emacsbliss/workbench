@@ -2,15 +2,21 @@
 #+OPTIONS: toc:nil
 
 * Fonts
+** SF Mono Powerline
 - [[https://github.com/Twixes/SF-Mono-Powerline][Powerline patched SF Mono]]
 
 #+BEGIN_SRC sh :tangle output/fonts.sh :noweb tangle :exports code :mkdirp yes
 git clone https://github.com/Twixes/SF-Mono-Powerline
 cp SF-Mono-Powerline/*.otf ~/Library/Fonts
-/usr/local/Cellar/fontconfig/2.13.1/bin/fc-cache -frv
 #+END_SRC
 
-* emacs
+** etbook
+#+BEGIN_SRC sh :tangle output/fonts.sh :noweb tangle :exports code :mkdirp yes
+git clone https://github.com/edwardtufte/et-book
+cd et-book && find . -iname "*.ttf" | xargs -I % cp % ~/Library/Fonts
+/usr/local/Cellar/fontconfig/2.13.1/bin/fc-cache -frv
+#+end_src
+
 * oh-my-zsh
 https://github.com/ohmyzsh/ohmyzsh
 
