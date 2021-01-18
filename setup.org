@@ -34,9 +34,7 @@ git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$
 - GnuPG (https://www.gnupg.org/)
 - graphviz
 #+BEGIN_SRC sh
-brew install cmake
-brew install libtool
-brew install graphviz
+brew install graphviz jq ripgrep fd fzf
 #+END_SRC
 ** coreutils
 Need to install ~coreutils~, otherwise ~realpath~ won't be available
