@@ -1,0 +1,314 @@
+#+TITLE: zsh Configuration
+#+STARTUP: overview
+#+STARTUP: logdone
+#+STARTUP: indent
+#+PROPERTY: padline yes
+#+PROPERTY: LOG_INTO_DRAWER LOGBOOK
+#+EXPORT_EXCLUDE_TAGS: ignoreExport
+#+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:nil -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+INFOJS_OPT: view:nil toc:t ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+#+STYLE: <link rel="stylesheet" type="text/css" href="http://orgmode.org/org-manual.css" />
+* Introduction
+This is a literate programming zsh configuration written in org-mode/org-babel. Borrowed from [[https://github.com/tomterl/zshorg][zshorg]].
+
+* supporting code
+#+NAME: get-home-dir
+#+BEGIN_SRC shell :exports code
+echo "$HOME"
+#+END_SRC
+
+* =zshrc=
+#+BEGIN_SRC sh :tangle ~/.zshrc :noweb tangle :exports code
+<<oh_my_zsh>>
+<<variables>>
+<<functions>>
+<<history>>
+<<vterm>>
+<<ending>>
+#+END_SRC
+
+** Oh My Zsh
+:PROPERTIES:
+:header-args: :noweb-ref oh_my_zsh
+:END:
+I use [[https://github.com/ohmyzsh/ohmyzsh][oh-my-zsh]] as the foundation of my zsh configuration.
+
+*** theme
+#+BEGIN_SRC sh :noweb yes
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+#+END_SRC
+
+#+BEGIN_SRC sh :noweb yes
+export ZSH="<<get-home-dir()>>/.oh-my-zsh"
+ZSH_THEME=powerlevel10k/powerlevel10k
+#+END_SRC
+
+*** plugins
+#+BEGIN_SRC sh
+plugins=(git history-substring-search)
+
+source $ZSH/oh-my-zsh.sh
+#+END_SRC
+
+** default shell
+Since Catalina MacOS, the default shell has been switched to ~zsh~ instead of ~bash~.
+#+begin_src sh :tangle no
+echo $SHELL
+#+end_src
+
+#+RESULTS:
+: /bin/zsh
+
+** Variables
+:PROPERTIES:
+:header-args: :noweb-ref variables
+:header-args: :padline yes
+:END:
+*** PATH
+#+BEGIN_SRC sh
+export PATH=/Applications/Emacs.app/Contents/MacOS/:$PATH
+#+END_SRC
+*** Coloring for standard commands
+Use =green= for matches, not =red=.
+#+BEGIN_SRC sh
+export GREP_COLORS="mt=01;32:ms=01;32:mc=01;32:sl=:cx=:fn=35:ln=32:bn=32:se=36"
+#+END_SRC
+
+*** Pager
+#+BEGIN_SRC sh
+export PAGER='less'
+#+END_SRC
+
+*** Characterset
+#+BEGIN_SRC sh
+export LC_CTYPE=$LANG
+#+END_SRC
+
+*** Editor
+#+BEGIN_SRC sh
+export EDITOR="emacsclient -nw -c"
+#+END_SRC
+
+** Functions
+:PROPERTIES:
+:header-args: :noweb-ref functions
+:END:
+*** Archives
+#+BEGIN_SRC sh
+function extract() {
+    unset REMOVE_ARCHIVE
+
+    if test "$1" = "-r"; then
+        REMOVE_ARCHIVE=1
+        shift
+    fi
+    if [[ -f $1 ]]; then
+        case $1 in
+            ,*.tar.bz2) tar xvjf $1;;
+            ,*.tar.gz) tar xvzf $1;;
+            ,*.tar.xz) tar xvJf $1;;
+            ,*.tar.lzma) tar --lzma -xvf $1;;
+            ,*.bz2) bunzip $1;;
+            ,*.rar) unrar x $1;;
+            ,*.gz) gunzip $1;;
+            ,*.tar) tar xvf $1;;
+            ,*.tbz2) tar xvjf $1;;
+            ,*.tgz) tar xvzf $1;;
+            ,*.zip) unzip $1;;
+            ,*.Z) uncompress $1;;
+            ,*.7z) 7z x $1;;
+            ,*) echo "'$1' cannot be extracted via >extract<";;
+        esac
+
+        if [[ $REMOVE_ARCHIVE -eq 1 ]]; then
+            echo removing "$1";
+            /bin/rm "$1";
+        fi
+
+    else
+        echo "'$1' is not a valid file"
+    fi
+}
+#+END_SRC
+*** Source bash scripts
+#+BEGIN_SRC sh
+bash_source() {
+    alias shopt=':'
+    alias _expand=_bash_expand
+    alias _complete=_bash_comp
+    emulate -L sh
+    setopt kshglob noshglob braceexpand
+
+    source "$@"
+}
+#+END_SRC
+
+** History
+:PROPERTIES:
+:header-args: :noweb-ref history
+:END:
+*** Variables
+#+BEGIN_SRC sh
+export HISTFILESIZE=50000
+export HISTIGNORE=$'[ \t]*:&:[fb]g:exit:ls:make:cd:usb:history:dl:vim*:ack*'
+#+END_SRC
+*** Options
+#+BEGIN_SRC sh
+setopt append_history
+setopt extended_history
+setopt hist_expire_dups_first
+setopt hist_ignore_dups
+setopt hist_ignore_space
+setopt hist_verify
+setopt inc_append_history
+setopt share_history
+setopt hist_fcntl_lock
+setopt hist_ignore_all_dups
+#+END_SRC
+
+*** Aliases
+   =lh= is short for =load history=, =fc= is a =zsh=-builtin to access
+   the history. =-R= rereads the history - in this case from the
+   standard history file. =-I= only appends new entries from this file
+   to the current active history of the shell process.
+
+#+BEGIN_SRC sh
+alias lh='fc -RI'
+#+END_SRC
+*** Functions
+#+BEGIN_SRC sh
+function zsh_stats() {
+  history | awk '{print $2}' | sort | uniq -c | sort -rn | head
+}
+#+END_SRC
+
+** fzf integration
+Based on this blog post
+https://medium.com/@_ahmed_ab/crazy-super-fast-fuzzy-search-9d44c29e14f,
+we can use ~Ctrl-r~ to search through the history using ~fzf~, very powerful.
+
+Also with this zsh function, we can go to any subdirectory very quickly:
+#+BEGIN_SRC sh
+# fdir - Find any directory and cd to selected directory
+# fd is conflicting with binary fd
+fdir() {
+ local dir
+ dir=$(find ${1:-.} -path '*/\.*' -prune -o -type d \
+      -print 2> /dev/null | fzf +m) &&
+ cd "$dir"
+}
+#+END_SRC
+** VTerm integration
+:PROPERTIES:
+:header-args: :noweb-ref vterm
+:END:
+[[https://github.com/akermu/emacs-libvterm][emacs-libvterm]] implements a bridge to libvterm to display a terminal in an Emacs
+buffer.
+
+It works really well compared to ansi-term and shell mode for Emacs. It's even
+better if we configure it to work with zsh.
+
+*** clear the screen
+use ~cls~ to avoid conflicting with ~clear~ binary.
+#+BEGIN_SRC sh
+if [[ "$INSIDE_EMACS" = 'vterm' ]]; then
+    alias cls='printf "\e]51;Evterm-clear-scrollback\e\\";tput clear'
+fi
+#+END_SRC
+*** directory tracking
+#+BEGIN_SRC sh
+vterm_prompt_end() {
+    printf "\e]51;A$(whoami)@$(hostname):$(pwd)\e\\";
+}
+PROMPT=$PROMPT'%{$(vterm_prompt_end)%}'
+#+END_SRC
+
+NOTE: when use the zsh theme like ~powerlevel10k~, need to make sure not to choose ~time~
+component from ~POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS~, otherwise directory
+tracking won't work.
+
+also this version seems claim to be working:
+#+BEGIN_SRC sh
+if [[ $INSIDE_EMACS = "vterm" ]]; then
+    function chpwd() {
+        print -Pn "\e]51;A$(pwd)\e\\";
+    }
+fi
+#+END_SRC
+
+*** execute emacs command
+With his backbone function defined, we can use it to call elisp function!
+#+BEGIN_SRC sh
+vterm_cmd() {
+    printf "\e]51;E"
+    local r
+    while [[ $# -gt 0 ]]; do
+        r="${1//\\/\\\\}"
+        r="${r//\"/\\\"}"
+        printf '"%s" ' "$r"
+        shift
+    done
+    printf "\e\\"
+}
+#+END_SRC
+
+However before we can call the elisp function, we need to add it to the
+~vterm-eval-cmds~ variable.
+
+For eg:
+#+begin_example
+(after! vterm
+  (add-to-list 'vterm-eval-cmds '("ediff-files" ediff-files)))
+#+end_example
+
+*** open file from vterm in Emacs
+With this function defined, we can do things like:
+#+begin_example
+ff abc.txt
+#+end_example
+
+and file ~abc.txt~ will be opened in the current Emacs instance, really sweet!
+
+#+BEGIN_SRC sh
+ff() {
+    vterm_cmd find-file "$(realpath "$@")"
+}
+#+END_SRC
+*** diff files from vterm using ediff
+#+BEGIN_SRC sh
+ediff() {
+    vterm_cmd ediff-files "$(realpath "$1")" "$(realpath "$2")"
+}
+#+END_SRC
+*** magit integration
+#+BEGIN_SRC sh
+# show the diff for current (unstaged) file in magit
+mdiff() {
+    vterm_cmd magit-diff "$(realpath "$@")"
+}
+
+# show the diff in magit for current repo
+diff-stage() {
+    vterm_cmd magit-diff-staged
+}
+
+# bring up magit staus buffer at current directory
+mgst() {
+    vterm_cmd magit-status-here
+}
+#+END_SRC
+
+** ending
+:PROPERTIES:
+:header-args: :noweb-ref ending
+:END:
+#+begin_src sh
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+#+end_src

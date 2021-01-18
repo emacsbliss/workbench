@@ -1,0 +1,8 @@
+* setup
+This includes my setup for fonts, zsh and emacs.
+
+To setup, do following:
+- make fonts
+- make zsh
+- make zshrc
+- configure/install emacs

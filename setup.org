@@ -1,0 +1,105 @@
+#+TITLE: setup
+#+OPTIONS: toc:nil
+
+* Fonts
+- [[https://github.com/Twixes/SF-Mono-Powerline][Powerline patched SF Mono]]
+
+#+BEGIN_SRC sh :tangle output/fonts.sh :noweb tangle :exports code :mkdirp yes
+git clone https://github.com/Twixes/SF-Mono-Powerline
+cp SF-Mono-Powerline/*.otf ~/Library/Fonts
+/usr/local/Cellar/fontconfig/2.13.1/bin/fc-cache -frv
+#+END_SRC
+
+* emacs
+* oh-my-zsh
+https://github.com/ohmyzsh/ohmyzsh
+
+#+BEGIN_SRC sh :tangle output/zsh.sh :noweb tangle :exports code
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+#+END_SRC
+
+** theme
+[[https://github.com/romkatv/powerlevel10k][powerlevel10k]]
+
+#+BEGIN_SRC sh :tangle output/zsh.sh :noweb tangle :exports code
+git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
+#+END_SRC
+
+* mac setup
+** software
+- homebrew
+- keyboard maestro
+- Dash
+- iTerm2
+- GnuPG (https://www.gnupg.org/)
+- graphviz
+#+BEGIN_SRC sh
+brew install cmake
+brew install libtool
+brew install graphviz
+#+END_SRC
+** coreutils
+Need to install ~coreutils~, otherwise ~realpath~ won't be available
+and it will cause issues later on.
+
+#+begin_example :tangle no
+❯ type realpath
+realpath not found
+#+end_example
+
+#+BEGIN_SRC sh
+brew install coreutils
+#+END_SRC
+
+#+begin_example :tangle no
+❯ type -a realpath
+realpath is /usr/local/bin/realpath
+#+end_example
+
+* google chrome plugins
+- [[https://chrome.google.com/webstore/detail/vimium/dbepggeogbaibhgnhhndojpepiihcmeb?hl=en][Vimium]]
+* python
+first thing needed is pyenv, very useful.
+** pyenv
+install using:
+#+BEGIN_SRC bash
+brew install pyenv
+#+END_SRC
+
+Then modify ~.zshrc~ by adding following lines:
+#+BEGIN_SRC bash
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init -)"
+#+END_SRC
+
+To find out the available python versions, use:
+#+BEGIN_SRC bash
+pyenv install --list
+#+END_SRC
+
+List all the install python versions:
+#+BEGIN_SRC bash
+pyenv versions
+#+END_SRC
+
+would produce something like this: (before installing any python using pyenv)
+#+BEGIN_EXAMPLE
+ * system (set by /Users/showgood/.pyenv/version)
+#+END_EXAMPLE
+
+anaconda2-5.0.1
+anaconda3-5.0.1
+
+http://geek.oops.jp/2016/01/10/how-to-install-pyenv/
+* java on MacOS
+Download from [[https://openjdk.java.net/][OpenJDK]].
+
+Then do following:
+
+#+BEGIN_SRC sh
+tar xf openjdk-13.0.2_osx-x64_bin.tar.gz
+sudo mv jdk-13.0.2.jdk  /Library/Java/JavaVirtualMachines/
+#+END_SRC
+
+Now run ~java --version~, if it works, then good to go.
